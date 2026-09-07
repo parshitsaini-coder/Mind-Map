@@ -1,7 +1,7 @@
 import { memo, useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Handle, Position } from 'reactflow';
-import { ChevronDown, ChevronRight, Star, Link2, Video, Paperclip, StickyNote } from 'lucide-react';
+import { ChevronDown, ChevronRight, Star, Link2, Video, Paperclip, StickyNote, Plus } from 'lucide-react';
 import { useMindMapStore } from '../../store/mindMapStore.js';
 import { useUIStore } from '../../store/uiStore.js';
 import { ICON_LIBRARY } from '../../data/iconLibrary.js';
@@ -79,6 +79,21 @@ function MindMapNode({ id, data, selected }) {
     else setDraft(label);
   };
 
+  // Step 13 fix: there was no way to add a child directly from the canvas —
+  // only the keyboard (Tab) or the toolbar's "+ Node" button (which needs a
+  // selection first). This gives every node a small hover-revealed "+" on
+  // whichever edge its children extend toward, matching how MindMeister/
+  // XMind-style tools work, and drops the new child straight into rename
+  // mode (same as Tab/Enter/toolbar).
+  const addChild = (e) => {
+    e.stopPropagation();
+    if (readOnly) return;
+    const newId = useMindMapStore.getState().addNode(id, { label: 'New Node' });
+    useMindMapStore.getState().selectNode(newId);
+    useUIStore.getState().requestEdit(newId);
+  };
+  const addOnRight = sourcePos === Position.Right;
+
   return (
     <motion.div
       // Step 11: nodes pop/scale in on mount (new node added, or a collapsed
@@ -98,7 +113,7 @@ function MindMapNode({ id, data, selected }) {
       className={`group relative flex items-center gap-1.5 px-2.5 py-1.5 text-[12px] font-medium border transition-shadow ${shape} ${
         selected ? 'ring-2 ring-accent' : 'border-sage'
       }`}
-      style={{ backgroundColor: style?.color || '#e8eddf', color: '#242423' }}
+      style={{ backgroundColor: style?.color || '#e8eddf', color: style?.textColor || '#242423' }}
     >
       <Handle type="target" position={targetPos} className="!bg-graphite !w-1.5 !h-1.5 !border-0" />
       <Handle type="source" position={sourcePos} className="!bg-graphite !w-1.5 !h-1.5 !border-0" />
@@ -174,6 +189,18 @@ function MindMapNode({ id, data, selected }) {
           className="ml-0.5 -mr-1 text-graphite hover:text-ink"
         >
           {data.collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+        </button>
+      )}
+
+      {!readOnly && (
+        <button
+          onClick={addChild}
+          title="Add child node"
+          className={`nodrag absolute w-4 h-4 rounded-full bg-accent text-ink flex items-center justify-center opacity-0 group-hover:opacity-100 hover:brightness-95 active:scale-90 transition shadow-sm z-10 ${
+            addOnRight ? 'top-1/2 -translate-y-1/2 -right-2' : 'left-1/2 -translate-x-1/2 -bottom-2'
+          }`}
+        >
+          <Plus size={10} strokeWidth={3} />
         </button>
       )}
     </motion.div>

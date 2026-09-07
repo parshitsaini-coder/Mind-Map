@@ -11,6 +11,7 @@ import { nanoid } from '../utils/id.js';
  *   style: {
  *     shape: 'rectangle' | 'oval' | 'cloud' | 'hexagon' | 'none',
  *     color: string,               // fill
+ *     textColor: string,           // label text color
  *     branchColor: string,         // connector color to parent
  *     branchWidth: number,
  *     icon: string | null,         // lucide icon name
@@ -50,6 +51,7 @@ const createNode = (overrides = {}) => ({
   style: {
     shape: 'rectangle',
     color: '#e8eddf',
+    textColor: '#242423',
     branchColor: '#333533',
     branchWidth: 2,
     icon: null,

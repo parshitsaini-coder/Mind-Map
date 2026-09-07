@@ -6,6 +6,7 @@ import Section from './Section.jsx';
 
 const SHAPES = ['rectangle', 'oval', 'cloud', 'hexagon', 'none'];
 const FILL_SWATCHES = ['#e8eddf', '#f5cb5c', '#cfdbd5', '#333533', '#242423', '#ffffff'];
+const TEXT_SWATCHES = ['#242423', '#333533', '#f5cb5c', '#ffffff', '#e8eddf'];
 const BRANCH_SWATCHES = ['#333533', '#f5cb5c', '#cfdbd5', '#242423'];
 
 function Swatch({ color, active, onClick }) {
@@ -67,6 +68,20 @@ export default function NodeStylePanel({ nodeId }) {
             type="color"
             value={node.style.color}
             onChange={(e) => patchStyle({ color: e.target.value })}
+            className="w-5 h-5 rounded-full overflow-hidden border border-sage cursor-pointer"
+          />
+        </div>
+      </Section>
+
+      <Section title="Text Color">
+        <div className="flex flex-wrap gap-1.5 items-center">
+          {TEXT_SWATCHES.map((c) => (
+            <Swatch key={c} color={c} active={(node.style.textColor || '#242423') === c} onClick={() => patchStyle({ textColor: c })} />
+          ))}
+          <input
+            type="color"
+            value={node.style.textColor || '#242423'}
+            onChange={(e) => patchStyle({ textColor: e.target.value })}
             className="w-5 h-5 rounded-full overflow-hidden border border-sage cursor-pointer"
           />
         </div>

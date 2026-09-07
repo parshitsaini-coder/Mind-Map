@@ -62,9 +62,16 @@ body {
   background-color: var(--color-canvas) !important;
 }
 
-/* Smooth animated repositioning when switching layouts (radial/tree/etc). */
+/* Smooth animated repositioning when switching layouts (radial/tree/etc).
+   Excluded while actively being dragged (`.dragging`, added by React Flow) —
+   otherwise this transition also eases every mousemove-driven position
+   update during a live drag, so the node visibly lags ~0.35s behind the
+   cursor instead of following it, making dragging feel broken/unresponsive. */
 .react-flow__node {
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.react-flow__node.dragging {
+  transition: none;
 }
 .react-flow__edge-path {
   transition: d 0.35s cubic-bezier(0.4, 0, 0.2, 1);
