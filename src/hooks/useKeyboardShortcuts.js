@@ -4,6 +4,7 @@ import { useUIStore } from '../store/uiStore.js';
 
 // Full shortcut map, shown in the on-screen cheat sheet (ShortcutsHelp.jsx) too.
 export const SHORTCUTS = [
+  { keys: 'Double-click', desc: 'Rename the selected node' },
   { keys: 'Tab', desc: 'Add child node' },
   { keys: 'Shift+Tab', desc: 'Outdent (move to grandparent)' },
   { keys: 'Enter', desc: 'Add sibling node' },
@@ -97,6 +98,7 @@ export function useKeyboardShortcuts() {
         e.preventDefault();
         const newId = store.addNode(selectedNodeId, { label: 'New Node' });
         store.selectNode(newId);
+        ui.requestEdit(newId);
         return;
       }
 
@@ -105,6 +107,7 @@ export function useKeyboardShortcuts() {
         if (node.floating) return;
         const newId = store.addNode(node.parentId, { label: 'New Node' });
         store.selectNode(newId);
+        ui.requestEdit(newId);
         return;
       }
 

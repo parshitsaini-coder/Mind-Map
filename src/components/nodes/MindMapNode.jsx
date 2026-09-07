@@ -1,8 +1,9 @@
-import { memo } from 'react';
+import { memo, useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Handle, Position } from 'reactflow';
 import { ChevronDown, ChevronRight, Star, Link2, Video, Paperclip, StickyNote } from 'lucide-react';
 import { useMindMapStore } from '../../store/mindMapStore.js';
+import { useUIStore } from '../../store/uiStore.js';
 import { ICON_LIBRARY } from '../../data/iconLibrary.js';
 
 const shapeClass = {
@@ -31,6 +32,8 @@ function ProgressRing({ progress }) {
 
 function MindMapNode({ id, data, selected }) {
   const toggleCollapse = useMindMapStore((s) => s.toggleCollapse);
+  const updateNode = useMindMapStore((s) => s.updateNode);
+  const readOnly = useMindMapStore((s) => s.readOnly);
   const nodes = useMindMapStore((s) => s.nodes);
   const hasChildren = Object.values(nodes).some((n) => n.parentId === id);
 
@@ -38,6 +41,43 @@ function MindMapNode({ id, data, selected }) {
   const shape = shapeClass[style?.shape] || shapeClass.rectangle;
   const [targetPos, sourcePos] = direction === 'horizontal' ? [Position.Left, Position.Right] : [Position.Top, Position.Bottom];
   const Icon = style?.icon ? ICON_LIBRARY[style.icon] : null;
+
+  // Double-click-to-rename: a mind map node's label was previously only
+  // ever set at creation time ("New Node") with no way to change it — the
+  // Style/Content side panels cover everything *except* the label itself.
+  // This restores the standard mind-map interaction (double-click, type,
+  // Enter/blur to commit, Escape to cancel) directly on the node.
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(label);
+  const inputRef = useRef(null);
+  const editingNodeId = useUIStore((s) => s.editingNodeId);
+  const clearRequestEdit = useUIStore((s) => s.clearRequestEdit);
+
+  useEffect(() => {
+    if (editingNodeId === id && !readOnly) {
+      setEditing(true);
+      clearRequestEdit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingNodeId, id]);
+
+  useEffect(() => {
+    if (!editing) setDraft(label);
+  }, [label, editing]);
+
+  useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== label) updateNode(id, { label: trimmed });
+    else setDraft(label);
+  };
 
   return (
     <motion.div
@@ -50,6 +90,11 @@ function MindMapNode({ id, data, selected }) {
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+      onDoubleClick={(e) => {
+        if (readOnly) return;
+        e.stopPropagation();
+        setEditing(true);
+      }}
       className={`group relative flex items-center gap-1.5 px-2.5 py-1.5 text-[12px] font-medium border transition-shadow ${shape} ${
         selected ? 'ring-2 ring-accent' : 'border-sage'
       }`}
@@ -76,7 +121,29 @@ function MindMapNode({ id, data, selected }) {
         />
       )}
 
-      <span className="whitespace-nowrap max-w-[160px] truncate">{label}</span>
+      {editing ? (
+        <input
+          ref={inputRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => {
+            e.stopPropagation(); // don't let global shortcuts (Enter=sibling, etc.) fire while typing
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commit();
+            } else if (e.key === 'Escape') {
+              e.preventDefault();
+              setDraft(label);
+              setEditing(false);
+            }
+          }}
+          onBlur={commit}
+          className="nodrag whitespace-nowrap max-w-[160px] w-[120px] bg-white/70 outline-none ring-1 ring-accent rounded px-0.5 -mx-0.5"
+        />
+      ) : (
+        <span className="whitespace-nowrap max-w-[160px] truncate">{label}</span>
+      )}
 
       {taskMeta?.priority && (
         <span className="text-[9px] px-1 rounded bg-ink/10 text-ink">P{taskMeta.priority}</span>

@@ -50,7 +50,11 @@ export default function Toolbar() {
       </button>
 
       <button
-        onClick={() => addNode(selectedNodeId, { label: 'New Node' })}
+        onClick={() => {
+          const newId = addNode(selectedNodeId, { label: 'New Node' });
+          useMindMapStore.getState().selectNode(newId);
+          useUIStore.getState().requestEdit(newId);
+        }}
         disabled={readOnly}
         className="flex items-center gap-1 h-7 px-2 rounded-md bg-accent text-ink text-xs font-medium hover:brightness-95 active:scale-95 transition disabled:opacity-40"
         title="Add node (Tab)"

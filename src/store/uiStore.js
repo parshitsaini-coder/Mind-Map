@@ -86,4 +86,11 @@ export const useUIStore = create((set, get) => ({
   sharedBannerMode: null, // null | 'view' | 'edit'
   setSharedBannerMode: (sharedBannerMode) => set({ sharedBannerMode }),
   dismissSharedBanner: () => set({ sharedBannerMode: null }),
+
+  // Step 13 fix: a freshly created node ("New Node") should drop straight
+  // into rename mode instead of leaving the user to hunt for how to relabel
+  // it. Set right after addNode(); MindMapNode reads + clears it on mount.
+  editingNodeId: null,
+  requestEdit: (editingNodeId) => set({ editingNodeId }),
+  clearRequestEdit: () => set({ editingNodeId: null }),
 }));
