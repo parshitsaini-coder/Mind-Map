@@ -64,6 +64,7 @@ const createNode = (overrides = {}) => ({
   comments: [],     // Step 9 — comments & @mentions
   collapsed: false,
   floating: false,
+  pinned: false,    // true once manually dragged — keeps its dropped position instead of the auto-layout one
   taskMeta: {
     todo: false,
     done: false,
@@ -337,7 +338,34 @@ export const useMindMapStore = create((set, get) => ({
 
   // ---- selection / layout ----
   selectNode: (id) => set({ selectedNodeId: id }),
-  setLayout: (layout) => set({ layout }),
+  // Step 13 fix: switching layouts is meant to re-organize the whole map, so
+  // any manually-dragged ("pinned") positions from the previous layout are
+  // cleared here — otherwise a node dragged in Radial mode would stay stuck
+  // at those coordinates after switching to Tree/Org/etc, ignoring the new
+  // layout entirely.
+  setLayout: (layout) =>
+    set((state) => ({
+      layout,
+      nodes: Object.fromEntries(
+        Object.entries(state.nodes).map(([id, n]) => [id, n.pinned ? { ...n, pinned: false } : n])
+      ),
+    })),
+
+  // Step 13 fix: dragging a node used to be purely cosmetic — anything not
+  // dropped directly onto another node (reparent) snapped back to the
+  // auto-layout position on the next store update (even just clicking to
+  // select it). This persists the drop location and flags the node
+  // `pinned` so Canvas uses it instead of the computed layout position,
+  // until the layout is switched (see setLayout) or the node is reparented.
+  pinNodePosition: (id, position) => {
+    if (get().readOnly) return;
+    get()._pushHistory();
+    set((state) => {
+      const node = state.nodes[id];
+      if (!node) return state;
+      return { nodes: { ...state.nodes, [id]: { ...node, position, pinned: true } } };
+    });
+  },
 
   // ---- sibling reordering (Step 8 — drag & keyboard reorder) ----
   reorderSibling: (id, direction) => {
@@ -386,7 +414,7 @@ export const useMindMapStore = create((set, get) => ({
       ).length;
 
       return {
-        nodes: { ...state.nodes, [id]: { ...node, parentId: newParentId, order: newSiblingCount } },
+        nodes: { ...state.nodes, [id]: { ...node, parentId: newParentId, order: newSiblingCount, pinned: false } },
         rootIds,
       };
     });

@@ -61,6 +61,7 @@ function CanvasInner() {
   const theme = CANVAS_THEMES[canvasTheme];
   const focusNodeId = useUIStore((s) => s.focusNodeId);
   const reparentNode = useMindMapStore((s) => s.reparentNode);
+  const pinNodePosition = useMindMapStore((s) => s.pinNodePosition);
 
   const visibleIds = useMemo(
     () => getVisibleIds(storeNodes, rootIds, focusNodeId),
@@ -75,7 +76,7 @@ function CanvasInner() {
         .map((n) => ({
           id: n.id,
           type: 'mindMapNode',
-          position: n.floating ? n.position : positions[n.id] || n.position,
+          position: n.floating || n.pinned ? n.position : positions[n.id] || n.position,
           data: {
             label: n.label,
             style: n.style,
@@ -100,7 +101,9 @@ function CanvasInner() {
     return Object.values(boundaries)
       .map((b) => {
         const memberIds = b.nodeIds.filter((id) => visibleIds.has(id));
-        const pts = memberIds.map((id) => (storeNodes[id]?.floating ? storeNodes[id].position : positions[id]));
+        const pts = memberIds.map((id) =>
+          storeNodes[id]?.floating || storeNodes[id]?.pinned ? storeNodes[id].position : positions[id]
+        );
         const valid = pts.filter(Boolean);
         if (valid.length === 0) return null;
         const minX = Math.min(...valid.map((p) => p.x)) - BOUNDARY_PAD;
@@ -154,7 +157,9 @@ function CanvasInner() {
   const onPaneClick = useCallback(() => selectNode(null), [selectNode]);
 
   // Step 8 — drag a node onto another node to reparent it (floating notes excluded,
-  // since they're meant to stay unconnected).
+  // since they're meant to stay unconnected). Step 13 fix: if it's *not* dropped
+  // onto another node, persist the drop position (see pinNodePosition) instead
+  // of silently snapping back to the auto-layout spot on the next re-render.
   const { getIntersectingNodes } = useReactFlow();
   const onNodeDragStop = useCallback(
     (_e, draggedNode) => {
@@ -164,9 +169,11 @@ function CanvasInner() {
       const target = overlaps.find((n) => !storeNodes[n.id]?.floating);
       if (target && target.id !== source.parentId) {
         reparentNode(draggedNode.id, target.id);
+      } else {
+        pinNodePosition(draggedNode.id, draggedNode.position);
       }
     },
-    [storeNodes, getIntersectingNodes, reparentNode]
+    [storeNodes, getIntersectingNodes, reparentNode, pinNodePosition]
   );
 
   return (
