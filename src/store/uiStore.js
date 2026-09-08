@@ -93,4 +93,11 @@ export const useUIStore = create((set, get) => ({
   editingNodeId: null,
   requestEdit: (editingNodeId) => set({ editingNodeId }),
   clearRequestEdit: () => set({ editingNodeId: null }),
+
+  // Step 13 fix: right-click a node to get a small Rename/Add child/Delete
+  // menu — previously the only way to delete a node was the Delete/Backspace
+  // key, which isn't discoverable, and there was no mouse-driven path at all.
+  contextMenu: null, // { nodeId, x, y } | null
+  openContextMenu: (nodeId, x, y) => set({ contextMenu: { nodeId, x, y } }),
+  closeContextMenu: () => set({ contextMenu: null }),
 }));

@@ -12,6 +12,7 @@ import RightPanel from './components/panels/RightPanel.jsx';
 import PresentationMode from './components/presentation/PresentationMode.jsx';
 import ShortcutsHelp from './components/help/ShortcutsHelp.jsx';
 import ShareDialog from './components/collab/ShareDialog.jsx';
+import NodeContextMenu from './components/canvas/NodeContextMenu.jsx';
 import { Eye, Pencil, X } from 'lucide-react';
 
 function SharedBanner() {
@@ -109,6 +110,7 @@ export default function App() {
       <PresentationMode />
       <ShortcutsHelp />
       <ShareDialog />
+      <NodeContextMenu />
     </div>
   );
 }

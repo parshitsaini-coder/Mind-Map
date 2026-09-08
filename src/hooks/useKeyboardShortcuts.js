@@ -4,6 +4,7 @@ import { useUIStore } from '../store/uiStore.js';
 
 // Full shortcut map, shown in the on-screen cheat sheet (ShortcutsHelp.jsx) too.
 export const SHORTCUTS = [
+  { keys: 'Right-click', desc: 'Rename / add child / delete a node' },
   { keys: 'Double-click', desc: 'Rename the selected node' },
   { keys: 'Tab', desc: 'Add child node' },
   { keys: 'Shift+Tab', desc: 'Outdent (move to grandparent)' },
