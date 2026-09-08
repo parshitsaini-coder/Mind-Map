@@ -110,6 +110,13 @@ function MindMapNode({ id, data, selected }) {
         e.stopPropagation();
         setEditing(true);
       }}
+      onContextMenu={(e) => {
+        if (readOnly) return;
+        e.preventDefault();
+        e.stopPropagation();
+        useMindMapStore.getState().selectNode(id);
+        useUIStore.getState().openContextMenu(id, e.clientX, e.clientY);
+      }}
       className={`group relative flex items-center gap-1.5 px-2.5 py-1.5 text-[12px] font-medium border transition-shadow ${shape} ${
         selected ? 'ring-2 ring-accent' : 'border-sage'
       }`}
@@ -180,28 +187,38 @@ function MindMapNode({ id, data, selected }) {
         </span>
       )}
 
-      {hasChildren && (
+      {/* Step 13 fix: the collapse/expand toggle used to be a small inline
+          chevron easy to miss next to the label. It now lives directly on
+          the connector dot where the branch's children extend from — the
+          same spot people were already clicking, expecting it to do
+          something. When there are no children yet, this spot instead shows
+          the hover-revealed "+" to add one (adding further children to an
+          existing branch still works via right-click → Add child, or Tab). */}
+      {hasChildren ? (
         <button
           onClick={(e) => {
             e.stopPropagation();
             toggleCollapse(id);
           }}
-          className="ml-0.5 -mr-1 text-graphite hover:text-ink"
-        >
-          {data.collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
-        </button>
-      )}
-
-      {!readOnly && (
-        <button
-          onClick={addChild}
-          title="Add child node"
-          className={`nodrag absolute w-4 h-4 rounded-full bg-accent text-ink flex items-center justify-center opacity-0 group-hover:opacity-100 hover:brightness-95 active:scale-90 transition shadow-sm z-10 ${
+          title={data.collapsed ? 'Expand branch' : 'Collapse branch'}
+          className={`nodrag absolute w-4 h-4 rounded-full bg-sage border border-graphite/50 text-ink flex items-center justify-center hover:brightness-95 active:scale-90 transition shadow-sm z-10 ${
             addOnRight ? 'top-1/2 -translate-y-1/2 -right-2' : 'left-1/2 -translate-x-1/2 -bottom-2'
           }`}
         >
-          <Plus size={10} strokeWidth={3} />
+          {data.collapsed ? <ChevronRight size={10} strokeWidth={2.5} /> : <ChevronDown size={10} strokeWidth={2.5} />}
         </button>
+      ) : (
+        !readOnly && (
+          <button
+            onClick={addChild}
+            title="Add child node"
+            className={`nodrag absolute w-4 h-4 rounded-full bg-accent text-ink flex items-center justify-center opacity-0 group-hover:opacity-100 hover:brightness-95 active:scale-90 transition shadow-sm z-10 ${
+              addOnRight ? 'top-1/2 -translate-y-1/2 -right-2' : 'left-1/2 -translate-x-1/2 -bottom-2'
+            }`}
+          >
+            <Plus size={10} strokeWidth={3} />
+          </button>
+        )
       )}
     </motion.div>
   );
